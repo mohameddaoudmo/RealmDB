@@ -5,9 +5,10 @@ import com.example.realmdb.model.Addresse
 import com.example.realmdb.model.Courses
 import com.example.realmdb.model.Student
 import com.example.realmdb.model.Teacher
+import dagger.hilt.android.HiltAndroidApp
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-
+@HiltAndroidApp
 class MyApp : Application() {
     companion object {
         val realm: Realm by lazy{

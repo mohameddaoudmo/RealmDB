@@ -2,6 +2,10 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id ("io.realm.kotlin")
+    kotlin("kapt")
+    id("com.google.dagger.hilt.android")
+
+
 
 }
 
@@ -52,6 +56,12 @@ android {
 }
 
 dependencies {
+    //daggerHilt
+    implementation("com.google.dagger:hilt-android:2.48")
+    kapt("com.google.dagger:hilt-android-compiler:2.48")
+
+    implementation ("androidx.hilt:hilt-navigation-compose:1.0.0")
+
     implementation ("me.saket.swipe:swipe:1.2.0")
 
     implementation("androidx.core:core-ktx:1.12.0")
@@ -72,4 +82,7 @@ dependencies {
     implementation ("io.realm.kotlin:library-base:1.11.0")
     implementation ("io.realm.kotlin:library-sync:1.11.0")// If using Device Sync
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.0") // If using coroutines with the SDK
+}
+kapt {
+    correctErrorTypes = true
 }
