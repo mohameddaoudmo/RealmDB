@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -27,7 +28,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -38,6 +47,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismiss
@@ -52,11 +63,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key.Companion.Button2
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -66,16 +79,24 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.navigation.Navigation
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.realmdatabase.ui.theme.RealmDatabaseTheme
 import com.example.realmdb.model.Courses
+import com.exyte.animatednavbar.AnimatedNavigationBar
+import com.exyte.animatednavbar.animation.balltrajectory.Parabolic
+import com.exyte.animatednavbar.animation.indendshape.Height
+import com.exyte.animatednavbar.animation.indendshape.ShapeCornerRadius
+import com.exyte.animatednavbar.animation.indendshape.shapeCornerRadius
+import com.exyte.animatednavbar.utils.noRippleClickable
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import me.saket.swipe.SwipeAction
 import me.saket.swipe.SwipeableActionsBox
 import java.time.Duration
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val viewmodel: MainViewModel by viewModels()
@@ -85,9 +106,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            RealmDatabaseTheme{
-            val personScreenViewModel: PersonScreenViewModel = hiltViewModel()
-                val person= personScreenViewModel.data
+            RealmDatabaseTheme {
+                val personScreenViewModel: PersonScreenViewModel = hiltViewModel()
+                val person = personScreenViewModel.data
                 val navController = rememberNavController()
                 val courses by viewmodel.courses.collectAsState()
                 val lazyListState = rememberLazyListState()
@@ -105,28 +126,32 @@ class MainActivity : ComponentActivity() {
                     var isFavourite by remember {
                         mutableStateOf(false)
                     }
-                    val state= rememberDismissState(
-                        confirmValueChange = {
-                            if (it==DismissValue.DismissedToStart){
-                            }
-                            true
+                    val state = rememberDismissState(confirmValueChange = {
+                        if (it == DismissValue.DismissedToStart) {
                         }
-                    )
+                        true
+                    })
                     NavHost(navController = navController, startDestination = "screen1") {
-                        composable("screen1") { fristScreen(navController = navController, lazyListState = lazyListState, courses = courses) }
-                        composable("screen2") { HomeScreen(
-                            data = person.value,
-                            navController = navController,
-                            filtered = personScreenViewModel.filtered.value,
-                            name = personScreenViewModel.name.value,
-                            objectId = personScreenViewModel.objectId.value,
-                            onNameChanged = { personScreenViewModel.updateName(name = it) },
-                            onObjectIdChanged = { personScreenViewModel.updateObjectId(id = it) },
-                            onInsertClicked = { personScreenViewModel.insertPerson() },
-                            onUpdateClicked = { personScreenViewModel.updatePerson() },
-                            onDeleteClicked = { personScreenViewModel.deletePerson() },
-                            onFilterClicked = { personScreenViewModel.filterData() }
-                        ) }
+                        composable("screen1") {
+                            fristScreen(
+                                navController = navController,
+                                lazyListState = lazyListState,
+                                courses = courses
+                            )
+                        }
+                        composable("screen2") {
+                            HomeScreen(data = person.value,
+                                navController = navController,
+                                filtered = personScreenViewModel.filtered.value,
+                                name = personScreenViewModel.name.value,
+                                objectId = personScreenViewModel.objectId.value,
+                                onNameChanged = { personScreenViewModel.updateName(name = it) },
+                                onObjectIdChanged = { personScreenViewModel.updateObjectId(id = it) },
+                                onInsertClicked = { personScreenViewModel.insertPerson() },
+                                onUpdateClicked = { personScreenViewModel.updatePerson() },
+                                onDeleteClicked = { personScreenViewModel.deletePerson() },
+                                onFilterClicked = { personScreenViewModel.filterData() })
+                        }
                     }
 
 
@@ -139,43 +164,92 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     private fun fristScreen(
         lazyListState: LazyListState,
-        courses: List<Courses>
-        ,navController: NavController
+        courses: List<Courses>,
+        navController: NavController,
+
     ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    colors = topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        titleContentColor = MaterialTheme.colorScheme.primary,
-                    ),
-                    title = {
-                        Text("Top app bar")
-                    }
-                )
-            },
-            bottomBar = {
-                BottomAppBar(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.primary,
-                ) {
-                    Text(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        textAlign = TextAlign.Center,
-                        text = "Bottom app bar",
+        val NavigationBarItems = listOf(
+            BottomNavigationItem(
+                title = "Home",
+                selectedIcon = Icons.Filled.Home,
+                unselectedIcon = Icons.Outlined.Home,
+                hasNews = false,
+            ),
+            BottomNavigationItem(
+                title = "Chat",
+                selectedIcon = Icons.Filled.Email,
+                unselectedIcon = Icons.Outlined.Email,
+                hasNews = false,
+                badgeCount = 45
+            ),
+            BottomNavigationItem(
+                title = "Settings",
+                selectedIcon = Icons.Filled.Settings,
+                unselectedIcon = Icons.Outlined.Settings,
+                hasNews = true,
+            ),
+        )
+        var selectedIndexForBottonNavigatonbar by remember {
+            mutableStateOf(0)
+        }
+        var NavigationItemss = remember { NavigationBarItem.values() }
+        var selectedItemIndex by rememberSaveable {
+            mutableStateOf(0)
+        }
+
+
+
+        Scaffold(topBar = {
+            TopAppBar(colors = topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                titleContentColor = MaterialTheme.colorScheme.primary,
+            ), title = {
+                Text("Top app bar")
+            })
+        }, bottomBar = {
+            NavigationBar {
+                NavigationBarItems.forEachIndexed { index, item ->
+                    NavigationBarItem(
+                        selected = selectedItemIndex == index,
+                        onClick = {
+                            selectedItemIndex = index
+                            // navController.navigate(item.title)
+                        },
+                        label = {
+                            Text(text = item.title)
+                        },
+                        alwaysShowLabel = false,
+                        icon = {
+                            BadgedBox(
+                                badge = {
+                                    if(item.badgeCount != null) {
+                                        Badge {
+                                            Text(text = item.badgeCount.toString())
+                                        }
+                                    } else if(item.hasNews) {
+                                        Badge()
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = if (index == selectedItemIndex) {
+                                        item.selectedIcon
+                                    } else item.unselectedIcon,
+                                    contentDescription = item.title
+                                )
+                            }
+                        }
                     )
-                }
-            },
-            floatingActionButton = {
-                FloatingActionButton(onClick = { navController.navigate("screen2")}) {
-                    Icon(Icons.Default.Add, contentDescription = "Add")
-                }
+                } }
+
+
+        }, floatingActionButton = {
+            FloatingActionButton(onClick = { navController.navigate("screen2") }) {
+                Icon(Icons.Default.Add, contentDescription = "Add")
             }
-        ) { innerPadding ->
+        }) { innerPadding ->
             Column(
-                modifier = Modifier
-                    .padding(innerPadding),
+                modifier = Modifier.padding(innerPadding),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 ListOfData(lazyListState, courses)
@@ -186,8 +260,7 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun ListOfData(
-        lazyListState: LazyListState,
-        courses: List<Courses>
+        lazyListState: LazyListState, courses: List<Courses>
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -195,32 +268,27 @@ class MainActivity : ComponentActivity() {
             state = lazyListState
         ) {
             items(courses, key = null) { course ->
-                val delete = SwipeAction(
-                    onSwipe = {
-    //                                    onSwipeToDelete(it)
-                    },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = "Delete chat",
-                            modifier = Modifier.padding(16.dp),
-                            tint = Color.White
-                        )
-                    }, background = Color.Red,
-                    isUndo = true
+                val delete = SwipeAction(onSwipe = {
+                    //                                    onSwipeToDelete(it)
+                }, icon = {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete chat",
+                        modifier = Modifier.padding(16.dp),
+                        tint = Color.White
+                    )
+                }, background = Color.Red, isUndo = true
                 )
-                val archive = SwipeAction(
-                    onSwipe = { viewmodel.showDetails(course) },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Default.Favorite,
-                            contentDescription = "archive chat",
-                            modifier = Modifier.padding(16.dp),
+                val archive = SwipeAction(onSwipe = { viewmodel.showDetails(course) }, icon = {
+                    Icon(
+                        imageVector = Icons.Default.Favorite,
+                        contentDescription = "archive chat",
+                        modifier = Modifier.padding(16.dp),
 
-                            tint = Color.White
+                        tint = Color.White
 
-                        )
-                    }, background = Color(0xFF50B384).copy(alpha = 0.7f)
+                    )
+                }, background = Color(0xFF50B384).copy(alpha = 0.7f)
                 )
                 SwipeableActionsBox(
                     modifier = Modifier,
@@ -238,16 +306,16 @@ class MainActivity : ComponentActivity() {
 
                 }
 
-    //  c
-    //                            SwipeToDismiss(state = state, background = { background(
-    //                                swipedismissState = state
-    //                            )} , dismissContent ={
-    //                                studentItem(course = course,
-    //                                    modifier = Modifier
-    //                                        .fillMaxWidth()
-    //                                        .padding(16.dp)
-    //                                        .clickable { viewmodel.showDetails(course) })
-    //                            } )
+                //  c
+                //                            SwipeToDismiss(state = state, background = { background(
+                //                                swipedismissState = state
+                //                            )} , dismissContent ={
+                //                                studentItem(course = course,
+                //                                    modifier = Modifier
+                //                                        .fillMaxWidth()
+                //                                        .padding(16.dp)
+                //                                        .clickable { viewmodel.showDetails(course) })
+                //                            } )
 
 
             }
@@ -273,8 +341,7 @@ class MainActivity : ComponentActivity() {
                         Text(text = it.street, fontSize = 16.sp)
                         Text(text = it.houseName, fontSize = 16.sp)
                         Button(
-                            onClick = viewmodel::deletecourse,
-                            colors = ButtonDefaults.buttonColors(
+                            onClick = viewmodel::deletecourse, colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.errorContainer,
                                 contentColor = MaterialTheme.colorScheme.onErrorContainer
                             )
@@ -321,7 +388,8 @@ fun <T> swipe(
             animationSpec = tween(durationMillis = animationDuration), shrinkTowards = Alignment.Top
         ) + fadeOut()
     ) {
-        SwipeToDismiss(state = state,
+        SwipeToDismiss(
+            state = state,
             background = { background(swipedismissState = state) },
             dismissContent = { content(item) },
             directions = setOf(DismissDirection.StartToEnd, DismissDirection.EndToStart)
@@ -331,11 +399,6 @@ fun <T> swipe(
 
 
 }
-
-
-
-
-
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -349,10 +412,6 @@ fun studentItem(course: Courses, modifier: Modifier = Modifier) {
 
     }
 }
-
-
-
-
 
 
 @OptIn(ExperimentalMaterial3Api::class)
